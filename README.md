@@ -1,8 +1,8 @@
 # claudecode-lualine.nvim
 
-[Claude Code](https://github.com/anthropics/claude.nvim) の状態を [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim) のステータスラインに表示するコンポーネントです。
+[Claude Code](https://github.com/coder/claudecode.nvim) の状態を [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim) のステータスラインに表示するコンポーネントです。
 
-A [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim) component that displays the status of [Claude Code](https://github.com/anthropics/claude.nvim) in your statusline.
+A [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim) component that displays the status of [Claude Code](https://github.com/coder/claudecode.nvim) in your statusline.
 
 ## 機能 / Features
 
@@ -147,13 +147,13 @@ MIT License - see [LICENSE](LICENSE) for details.
 このプラグインは以下の素晴らしいプロジェクトなしでは実現できませんでした：
 
 - [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim)
-- [Claude Code](https://github.com/anthropics/claude.nvim)
+- [Claude Code](https://github.com/coder/claudecode.nvim)
 - [ccmanager](https://github.com/kbwo/ccmanager)
 - [Neovim](https://neovim.io/)
 
 This plugin wouldn't be possible without these amazing projects:
 
 - [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim)
-- [Claude Code](https://github.com/anthropics/claude.nvim)
+- [Claude Code](https://github.com/coder/claudecode.nvim)
 - [ccmanager](https://github.com/kbwo/ccmanager)
 - [Neovim](https://neovim.io/)
