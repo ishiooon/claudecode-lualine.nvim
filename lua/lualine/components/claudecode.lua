@@ -7,7 +7,6 @@ local M = require('lualine.component'):extend()
 _G.claudecode_lualine_state = _G.claudecode_lualine_state or {
   request_state = 'idle',
   terminal_buffers = {},  -- 複数のターミナルバッファを追跡
-  last_content = {},      -- 各バッファの最後のコンテンツ
   timer = nil,
 }
 
@@ -59,7 +58,6 @@ function M:setup_terminal_monitoring()
          (bufname:lower():match("claude") or bufname:lower():match("serena")) then
         -- ターミナルバッファを登録
         _G.claudecode_lualine_state.terminal_buffers[event.buf] = true
-        _G.claudecode_lualine_state.last_content[event.buf] = ""
       end
     end,
   })
@@ -69,7 +67,6 @@ function M:setup_terminal_monitoring()
     group = augroup,
     callback = function(event)
       _G.claudecode_lualine_state.terminal_buffers[event.buf] = nil
-      _G.claudecode_lualine_state.last_content[event.buf] = nil
     end,
   })
   
@@ -84,7 +81,7 @@ end
 
 -- すべてのターミナルをチェック
 function M:check_all_terminals()
-  local has_activity = false
+  local detected_state = 'idle'
   local has_valid_terminal = false
   
   -- 各ターミナルバッファをチェック
@@ -97,29 +94,23 @@ function M:check_all_terminals()
       if ok and job_id then
         local job_info = vim.fn.jobwait({job_id}, 0)
         if job_info and job_info[1] == -1 then -- ジョブが実行中
-          -- 最後の数行を取得
-          local ok_lines, lines = pcall(vim.api.nvim_buf_get_lines, buf, -20, -1, false)
+          -- 最後の30行を取得（ccmanagerと同様）
+          local ok_lines, lines = pcall(vim.api.nvim_buf_get_lines, buf, -30, -1, false)
           if ok_lines then
-            -- 内容をチェック
-            local current_content = table.concat(lines, "\n")
-            local last_content = _G.claudecode_lualine_state.last_content[buf] or ""
+            -- 特定のパターンを検出
+            local current_state = M:detect_state_from_lines(lines)
             
-            -- 内容が変更されていたらアクティビティあり
-            if current_content ~= last_content then
-              has_activity = true
-              _G.claudecode_lualine_state.last_content[buf] = current_content
-              
-              -- デバッグ出力
-              if vim.g.claudecode_lualine_debug then
-                vim.notify(string.format('[ClaudeCodeLualine] Content changed in buffer %d', buf), vim.log.levels.INFO)
-              end
-            else
-              -- 変更がない場合、プロンプトをチェック
-              local is_at_prompt = M:check_prompt(lines)
-              if is_at_prompt and not has_activity then
-                -- プロンプトで待機中 = アイドル
-                has_activity = false
-              end
+            -- より高い優先度の状態を選択（busy > wait > idle）
+            if current_state == 'busy' then
+              detected_state = 'busy'
+              break -- busyを見つけたら即座に終了
+            elseif current_state == 'wait' and detected_state ~= 'busy' then
+              detected_state = 'wait'
+            end
+            
+            -- デバッグ出力
+            if vim.g.claudecode_lualine_debug then
+              vim.notify(string.format('[ClaudeCodeLualine] Buffer %d state: %s', buf, current_state), vim.log.levels.INFO)
             end
           end
         end
@@ -127,50 +118,43 @@ function M:check_all_terminals()
     else
       -- 無効なバッファは削除
       _G.claudecode_lualine_state.terminal_buffers[buf] = nil
-      _G.claudecode_lualine_state.last_content[buf] = nil
     end
   end
   
   -- 状態を更新
-  if has_activity then
-    if _G.claudecode_lualine_state.request_state ~= 'busy' then
-      _G.claudecode_lualine_state.request_state = 'busy'
-      vim.cmd('redrawstatus!')
-    end
-  else
-    if _G.claudecode_lualine_state.request_state ~= 'idle' then
-      _G.claudecode_lualine_state.request_state = 'idle'
-      vim.cmd('redrawstatus!')
-    end
+  if _G.claudecode_lualine_state.request_state ~= detected_state then
+    _G.claudecode_lualine_state.request_state = detected_state
+    vim.cmd('redrawstatus!')
   end
 end
 
--- プロンプトをチェック
-function M:check_prompt(lines)
-  -- 最後の非空行を探す
+-- 行からステータスを検出
+function M:detect_state_from_lines(lines)
+  -- 下から上へスキャン（最新の状態を優先）
   for i = #lines, 1, -1 do
     local line = lines[i]
-    if line and line:match("%S") then
-      -- プロンプトパターン
-      local prompts = {
-        ">%s*$",           -- Simple prompt
-        "❯%s*$",          -- Modern prompt  
-        "[Cc]laude[>:]%s*$", -- Claude prompt
-        "[Ss]erena[>:]%s*$", -- Serena prompt
-        "%$%s*$",          -- Shell prompt
-        "^%s*[%w@%-%_]+[>#$]%s*$", -- User@host prompt
-      }
+    if line then
+      local line_lower = line:lower()
       
-      for _, pattern in ipairs(prompts) do
-        if line:match(pattern) then
-          return true
-        end
+      -- Busy状態の検出: "esc to interrupt"
+      if line_lower:match("esc to interrupt") then
+        return 'busy'
       end
-      return false
+      
+      -- Wait状態の検出: 選択プロンプト
+      if line:match("│%s*Do you want") or 
+         line:match("│%s*Would you like") or
+         line:match("│%s*Select") or
+         line:match("│%s*Choose") then
+        return 'wait'
+      end
     end
   end
-  return true -- 空の場合もアイドルとみなす
+  
+  -- デフォルトはidle
+  return 'idle'
 end
+
 
 -- Claude Code の現在のステータスを取得
 -- パフォーマンスのためキャッシュを使用
