@@ -1,8 +1,8 @@
 # claudecode-lualine.nvim
 
-[Claude Code](https://github.com/coder/claudecode.nvim) の状態を [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim) のステータスラインに表示するコンポーネントです。
+[Claude Code](https://github.com/anthropics/claude.nvim) の状態を [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim) のステータスラインに表示するコンポーネントです。
 
-A [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim) component that displays the status of [Claude Code](https://github.com/coder/claudecode.nvim) in your statusline.
+A [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim) component that displays the status of [Claude Code](https://github.com/anthropics/claude.nvim) in your statusline.
 
 ## 機能 / Features
 
@@ -33,7 +33,7 @@ A [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim) component that di
   'ishiooon/claudecode-lualine.nvim',
   dependencies = {
     'nvim-lualine/lualine.nvim',
-    'coder/claudecode.nvim',
+    'anthropics/claude.nvim',
   },
 }
 ```
@@ -110,9 +110,10 @@ This plugin monitors the WebSocket server status of Claude Code to determine its
    ```lua
    require('lualine').setup {
      sections = {
-       lualine_c = {
+       lualine_x = {
          {
-           require('lualine.components.claudecode_simple'),
+           'claudecode',
+           _component = require('lualine.components.claudecode_simple'),
            -- 同じオプションを使用
          },
        },
@@ -131,16 +132,11 @@ This plugin monitors the WebSocket server status of Claude Code to determine its
 - Claude Code が期待されるイベントを発火しない場合、ステータスがリアルタイムで更新されない可能性があります
 - 現在、プラグインは WebSocket サーバーのステータスとターミナルアクティビティを監視しています
 - 最も正確なステータスのためには、Claude Code が適切なイベントを発火する必要があります
+- ログドキュメントで言及されているclaudecode_v2.luaは現在のバージョンでは削除されています
 
 ## ライセンス / License
 
 MIT License - see [LICENSE](LICENSE) for details.
-
-## 貢献 / Contributing
-
-貢献を歓迎します！イシューやプルリクエストはお気軽にどうぞ。
-
-Contributions are welcome! Please feel free to submit issues or pull requests.
 
 ## 作者 / Author
 
@@ -151,13 +147,13 @@ Contributions are welcome! Please feel free to submit issues or pull requests.
 このプラグインは以下の素晴らしいプロジェクトなしでは実現できませんでした：
 
 - [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim)
-- [Claude Code](https://github.com/coder/claudecode.nvim)
+- [Claude Code](https://github.com/anthropics/claude.nvim)
 - [ccmanager](https://github.com/kbwo/ccmanager)
 - [Neovim](https://neovim.io/)
 
 This plugin wouldn't be possible without these amazing projects:
 
 - [lualine.nvim](https://github.com/nvim-lualine/lualine.nvim)
-- [Claude Code](https://github.com/coder/claudecode.nvim)
+- [Claude Code](https://github.com/anthropics/claude.nvim)
 - [ccmanager](https://github.com/kbwo/ccmanager)
 - [Neovim](https://neovim.io/)
